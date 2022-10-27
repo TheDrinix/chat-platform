@@ -8,7 +8,7 @@ export function isAuthenticated(to: RouteLocationNormalized, from: RouteLocation
   if (userStore.isAuthenticated)
     return next();
 
-  if (userStore.refresh_token) {
+  if (userStore.tokens.refresh_token) {
     return userStore.refreshToken().then(() => {
       next();
     }).catch(() => {

@@ -24,7 +24,7 @@ declare module 'pinia' {
 const app = createApp(App);
 
 app.use(axios, {
-  baseUrl: 'http://localhost:3200'
+  baseUrl: 'http://localhost:3000'
 });
 
 const pinia = createPinia().use(() => ({

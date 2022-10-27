@@ -1,7 +1,16 @@
-export interface RawUserData {
+export interface AuthResponseData {
   id: number;
-  token: string;
+  username: string;
+  email: string;
+  public_uid: string;
+  pfpUrl: string;
+  createdAt: Date;
   refreshToken: string;
+  token: string;
+}
+
+export interface UserResponseData {
+  id: number;
   username: string;
   public_uid: string;
   email: string;
@@ -9,13 +18,9 @@ export interface RawUserData {
   createdAt: Date;
 }
 
-export interface UserData {
-  id: number;
-  username: string;
-  public_uid: string;
-  pfpUrl: string;
-  access_token: string;
-  refresh_token: string;
+export interface UserStoreState {
+  user: LoggedInUser;
+  tokens: Tokens;
 }
 
 export interface User {
@@ -24,4 +29,18 @@ export interface User {
   public_uid: string;
   pfpUrl: string;
   createdAt: Date
+}
+
+export interface LoggedInUser {
+  id: number;
+  username: string;
+  public_uid: string;
+  pfp_url: string;
+  createdAt: Date
+  email: string;
+}
+
+export interface Tokens {
+  access_token: string;
+  refresh_token: string
 }
