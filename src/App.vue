@@ -20,10 +20,10 @@ export default defineComponent({
     }
   },
   methods: {
-    ...mapActions(useUserStore, ['loadTokens'])
+    ...mapActions(useUserStore, ['loadLoggedInUserData'])
   },
-  created() {
-    this.loadTokens();
+  async created() {
+    await this.loadLoggedInUserData();
   }
 })
 </script>
