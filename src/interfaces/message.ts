@@ -7,6 +7,7 @@ export interface MessageData {
   author: User;
   chat: ChatData;
   createdAt: Date;
+  attachments?: Attachment[];
 }
 
 export interface Message {
@@ -14,4 +15,13 @@ export interface Message {
   text: string;
   author: User;
   createdAt: Date;
+  attachment?: Attachment;
+}
+
+export interface Attachment {
+  id: number;
+  filename: string;
+  originalFilename: string;
+  mimetype: string;
+  urlPath: string;
 }
