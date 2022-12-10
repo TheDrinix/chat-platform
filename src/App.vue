@@ -1,7 +1,9 @@
 <template>
   <v-app class="h-screen">
     <v-main class="h-screen">
-      <router-view/>
+      <Suspense>
+        <router-view/>
+      </Suspense>
     </v-main>
   </v-app>
 </template>
@@ -10,6 +12,7 @@
 import { defineComponent } from 'vue'
 import { mapActions } from "pinia";
 import { useUserStore } from "@/stores/user";
+import { useChatRequestsStore } from "@/stores/requests";
 
 export default defineComponent({
   name: 'App',
@@ -20,10 +23,45 @@ export default defineComponent({
     }
   },
   methods: {
-    ...mapActions(useUserStore, ['loadLoggedInUserData'])
+    ...mapActions(useUserStore, ['loadLoggedInUserData']),
+    ...mapActions(useChatRequestsStore, ['loadReceivedRequests'])
   },
   async created() {
     await this.loadLoggedInUserData();
+    await this.loadReceivedRequests();
   }
 })
 </script>
+
+<style>
+body {
+  overflow: hidden;
+}
+
+/* ===== Scrollbar CSS ===== */
+/* Firefox */
+* {
+  scrollbar-width: auto;
+  /*noinspection CssUnresolvedCustomProperty*/
+  scrollbar-color: rgb(var(--v-theme-primary));;
+}
+
+/* Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+  width: 12px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  /*noinspection CssUnresolvedCustomProperty*/
+  background-color: rgb(var(--v-theme-primary));
+  border-radius: 10px;
+}
+
+body::-webkit-scrollbar {
+  display: none;
+}
+</style>

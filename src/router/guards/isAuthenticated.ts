@@ -12,9 +12,9 @@ export function isAuthenticated(to: RouteLocationNormalized, from: RouteLocation
     return userStore.refreshToken().then(() => {
       next();
     }).catch(() => {
-      next({ name: 'login' })
+      next({ name: 'auth' })
     })
   }
 
-  next({ name: 'login' })
+  next({ name: 'auth' })
 }

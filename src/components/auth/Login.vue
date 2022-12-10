@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { inject, ref } from "vue";
+import { inject, Ref, ref } from "vue";
 import { useUserStore } from "@/stores/user";
 import type { AxiosInstance } from "axios";
 import type { AuthResponseData } from "@/interfaces/user";
+import { useRouter } from "vue-router";
 
 const userStore = useUserStore();
-const axios = inject<AxiosInstance>('axios')
+const axios = inject<AxiosInstance>('axios');
+const router = useRouter();
 
 if (!axios) {
   throw new Error('Axios injection failed');
@@ -17,8 +19,11 @@ const emit = defineEmits<{
 
 let email = ref('');
 let password = ref('');
+let err: Ref<any>;
 
 const handleLogin = async () => {
+  err = ref()
+
   const body = {
     email: email.value,
     password: password.value
@@ -32,12 +37,19 @@ const handleLogin = async () => {
     userStore.storeAuthData(res.data);
   } catch(e: any) {
     console.error(e);
+
+    err = ref(e)
+
+    return;
   }
+
+  router.push('/chats')
 }
 </script>
 
 <template>
   <v-card-title>Login</v-card-title>
+  <v-card-subtitle v-if="err">{{err}}</v-card-subtitle>
   <v-card-text>
     <v-form @submit.prevent="handleLogin">
       <v-text-field color="primary" type="text" name="email" label="Email" v-model="email" />

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { isAuthenticated } from "./guards/isAuthenticated";
-import RequestsView from "@/views/Home/RequestsView.vue";
+import RequestsView from "@/views/home/RequestsView.vue";
+import ChatView from '@/views/home/ChatView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,9 +22,10 @@ const router = createRouter({
       path: '/chats',
       name: 'home',
       beforeEnter: isAuthenticated,
-      component: () => import('../views/Home/index.vue'),
+      component: () => import('../views/home/index.vue'),
       children: [
-        { path: '/', name: 'chatRequests', component: RequestsView }
+        { path: '', name: 'chatRequests', component: RequestsView },
+        { path: ':chat_id', name: 'chat', component: ChatView }
       ]
     },
     { path: '/auth', name: 'auth', component: () => import('../views/AuthView.vue') }
