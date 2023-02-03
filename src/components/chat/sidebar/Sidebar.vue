@@ -1,0 +1,301 @@
+<script setup lang="ts">
+import Chat from "@/components/chat/sidebar/Chat.vue";
+import { useChatsStore } from "@/stores/chats";
+import { computed, inject, ref } from "vue";
+import { checkTokenExpirationError } from "@/helpers";
+import { useUserStore } from "@/stores/user";
+import type { AxiosInstance } from "axios";
+
+const axios = inject<AxiosInstance>("axios");
+if (!axios) throw new Error('Axios injection error');
+
+const chatsStore = useChatsStore();
+const userStore = useUserStore();
+
+let createChatDialog = ref(false);
+let userIdentifier = ref('');
+let groupName = ref('');
+let isLoading = ref(false);
+
+const chats = computed(() => {
+  return [...chatsStore.chats.values()]
+})
+
+const handleRequestSend = async () => {
+  if (!/^.{3,120}#[a-zA-Z0-9]{4}$/gm.test(userIdentifier.value)) return;
+
+  isLoading.value = true;
+
+  const [username, uid] = userIdentifier.value.split('#');
+
+  try {
+    const token = userStore.tokens.access_token;
+
+    // TODO: Do something with response and add type interface for the response
+    const res = await axios.post('/chats/requests', {
+      receiverUsername: username,
+      receiverUid: uid
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    userIdentifier.value = '';
+    createChatDialog.value = false;
+  } catch (e: any) {
+    isLoading.value = false;
+    if (await checkTokenExpirationError(e)) {
+      handleRequestSend();
+      return;
+    }
+  }
+  isLoading.value = false;
+}
+
+const handleCreateGroup = async () => {
+  if (groupName.value.length < 3) return;
+
+  isLoading.value = true;
+
+  try {
+    const token = userStore.tokens.access_token;
+
+    // TODO: Do the same thing here lol
+    const res = await axios.post('/chats/group', { groupName: groupName.value }, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    groupName.value = '';
+    createChatDialog.value = false;
+  } catch (e: any) {
+    isLoading.value = false;
+    if (await checkTokenExpirationError(e)) {
+      handleCreateGroup();
+      return;
+    }
+  }
+  isLoading.value = false;
+}
+</script>
+
+<template>
+  <div id="sidebar" >
+    <div class="chat-list">
+      <div id="requests-btn">
+        <div class="w-100">
+          <router-link to="/chats" tag="a" exact-active-class="active">
+            <v-icon icon="mdi-email" size="large" class="icon" />
+            <span>Chat requests</span>
+          </router-link>
+        </div>
+        <div class="ml-auto">
+          <v-dialog v-model="createChatDialog">
+            <template v-slot:activator="{ props }">
+              <a id="start-chat-btn" v-bind="props">
+                <v-icon icon="mdi-plus-circle" size="large" class="icon" />
+              </a>
+            </template>
+
+            <v-card id="create-chat-dialog" :loading="isLoading">
+              <template v-slot:loader="{ isActive }">
+                <v-progress-linear
+                  :active="isActive"
+                  color="primary"
+                  height="4"
+                  indeterminate
+                />
+              </template>
+
+              <v-card-item>
+                <v-card-title>Request a private chat</v-card-title>
+                <div>
+                  <v-text-field
+                    density="comfortable"
+                    append-icon="mdi-send"
+                    @click:append="handleRequestSend"
+                    v-model="userIdentifier"
+                    :rules="[
+                      () => /^.{3,120}#[a-zA-Z0-9]{4}$/gm.test(userIdentifier) || 'Enter a valid user identifier'
+                    ]"
+                  >
+                    <template v-slot:label>
+                      <span>
+                         <v-icon icon="mdi-account" /> Enter a Username#0000
+                      </span>
+                    </template>
+                  </v-text-field>
+                </div>
+              </v-card-item>
+              <hr>
+              <v-card-item>
+                <v-card-title>Create a group chat</v-card-title>
+                <div>
+                  <v-text-field
+                    density="comfortable"
+                    append-icon="mdi-send"
+                    @click:append="handleCreateGroup"
+                    v-model="groupName"
+                    :rules="[
+                      () => groupName.length >= 3 || 'Group name must be at least 3 characters long',
+                    ]"
+                  >
+                    <template v-slot:label>
+                      <span>
+                         <v-icon icon="mdi-account-group" /> Enter a group chat name
+                      </span>
+                    </template>
+                  </v-text-field>
+                </div>
+              </v-card-item>
+              <v-card-actions>
+                <v-btn color="primary" block @click="createChatDialog = false">Close dialog</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+        </div>
+      </div>
+    </div>
+    <hr>
+    <div class="chat-list">
+      <Chat v-for="chat in chats" :chat="chat" />
+    </div>
+    <hr style="margin-top: auto">
+    <div class="user-info">
+
+    </div>
+  </div>
+</template>
+
+<style scoped>
+#sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 3.5rem;
+  max-width: 320px;
+  height: 100vh;
+  padding: 0 0.5rem;
+  box-sizing: border-box;
+  background: #16171a;
+  overflow: hidden;
+  transition: all 0.35s ease;
+  position: absolute;
+  z-index: 99;
+}
+
+#sidebar:hover,
+#sidebar.open {
+  width: 90vw;
+}
+
+.chat-list {
+  max-width: 100%;
+  min-width: 2.5rem;
+  margin: 0.25rem 0;
+  display: flex;
+  flex-direction: column;
+  overflow: scroll;
+}
+
+.chat-list::-webkit-scrollbar {
+  display: none;
+}
+
+ :deep(.chat-item) {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: 0.125rem 0;
+  border-radius: 0.25rem;
+  transition: all .3s ease;
+  text-decoration: none;
+  color: white;
+}
+
+:deep(.chat-item.active),
+#requests-btn a.active {
+  /*noinspection CssUnresolvedCustomProperty*/
+  color: rgb(var(--v-theme-primary))
+}
+
+:deep(.chat-item:hover),
+#requests-btn a:hover {
+  background: rgba(75,75,85,.3);
+}
+
+:deep(.chat-title) {
+  padding-left: .5rem;
+  font-size: 1.25rem;
+}
+
+:deep(.chat-logo) {
+  height: 2.5rem;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+}
+
+#requests-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: 0.125rem 0;
+  border-radius: 0.25rem;
+}
+
+#requests-btn a {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: white;
+  transition: background-color 0.3s ease;
+}
+
+#requests-btn .icon {
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  padding: 0.75rem;
+}
+
+#requests-btn #start-chat-btn {
+
+}
+
+#requests-btn span,
+#requests-btn #start-chat-btn,
+:deep(.chat-title) {
+  font-size: 0rem;
+  transition: font-size 0.2s ease;
+}
+
+#sidebar:hover #requests-btn span,
+#sidebar:hover #requests-btn #start-chat-btn,
+#sidebar:hover :deep(.chat-title),
+#sidebar.open #requests-btn span,
+#sidebar.open #requests-btn #start-chat-btn,
+#sidebar.open :deep(.chat-item)
+{
+  font-size: 1rem;
+}
+
+#create-chat-dialog {
+  width: 90vw;
+}
+
+@media only screen and (min-width: 580px) {
+  #create-chat-dialog {
+    width: 66vw;
+  }
+}
+
+@media only screen and (min-width: 960px) {
+  #sidebar {
+    position: relative;
+  }
+
+  #create-chat-dialog {
+    width: 40vw;
+  }
+}
+</style>

@@ -5,6 +5,8 @@ import { useRoute } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import type { MessageData } from "@/interfaces/message";
 import { useChatsStore } from "@/stores/chats";
+import { AxiosError } from "axios";
+import { checkTokenExpirationError } from "@/helpers";
 
 const axios = inject<AxiosInstance>('axios');
 if (!axios) throw new Error('Axios injection error');
@@ -17,7 +19,6 @@ const chatId = computed(() => {
 
 const userStore = useUserStore();
 const chatsStore = useChatsStore()
-const token = userStore.tokens.access_token;
 
 let fileInput: Ref<null | HTMLInputElement> = ref(null)
 
@@ -61,6 +62,8 @@ const handleMessageSend = async (e: KeyboardEvent | MouseEvent) => {
       formData.append('attachment', attachment.value);
     }
 
+    const token = userStore.tokens.access_token;
+
     const res = await axios.post<MessageData>(`/messages/${chatId.value}`, formData, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -73,14 +76,12 @@ const handleMessageSend = async (e: KeyboardEvent | MouseEvent) => {
     chatsStore.storeChatMessage(message);
 
     isSending.value = false;
-  } catch (e: any) {
-    if (e.status === 401) {
-      if (e.message === 'EXPIRED') {
-        await userStore.refreshToken()
-        handleMessageSend(e);
-      }
-    } else {
-      isSending.value = false;
+    messageText.value = "";
+  } catch (err: any | AxiosError) {
+    isSending.value = false;
+    if (await checkTokenExpirationError(err)) {
+      handleMessageSend(e);
+      return;
     }
   }
 

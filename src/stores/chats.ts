@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import type { Chat, ChatData, ChatsStore } from "@/interfaces/chat";
 import { useUserStore } from "@/stores/user";
 import type { Message, MessageData } from "@/interfaces/message";
+import { checkTokenExpirationError } from "@/helpers";
 
 export const useChatsStore = defineStore({
   id: 'chats',
@@ -27,12 +28,9 @@ export const useChatsStore = defineStore({
           this.chats.set(chat.id, chat);
         }
       } catch (e: any) {
-        if (e.status === 401) {
-          if (e.message === 'EXPIRED') {
-            await userStore.refreshToken();
-            this.loadUsersChats();
-            return;
-          }
+        if (await checkTokenExpirationError(e)) {
+          this.loadUsersChats();
+          return;
         }
 
         console.error(e);
@@ -74,11 +72,9 @@ export const useChatsStore = defineStore({
 
         this.chats.set(chatId, chat);
       } catch (e: any) {
-        if (e.status === 401) {
-          if (e.message === 'EXPIRED') {
-            await userStore.refreshToken();
-            this.loadChatMessages(chatId);
-          }
+        if (await checkTokenExpirationError(e)) {
+          this.loadChatMessages(chatId);
+          return;
         }
       }
     },

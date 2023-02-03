@@ -1,6 +1,6 @@
 <template>
-  <v-app class="h-screen">
-    <v-main class="h-screen">
+  <v-app class="h-screen overflow-hidden">
+    <v-main class="h-screen overflow-hidden">
       <Suspense>
         <router-view/>
       </Suspense>
@@ -34,10 +34,6 @@ export default defineComponent({
 </script>
 
 <style>
-body {
-  overflow: hidden;
-}
-
 /* ===== Scrollbar CSS ===== */
 /* Firefox */
 * {

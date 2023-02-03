@@ -7,7 +7,7 @@ const hasAccount = ref(true);
 </script>
 
 <template>
-<v-container class="h-screen">
+<v-container class="h-screen overflow-hidden">
   <v-row align="center" justify="center" class="auth-container">
     <v-col cols="12">
       <v-card>

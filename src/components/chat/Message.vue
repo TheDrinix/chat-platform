@@ -71,7 +71,7 @@ const downloadFile = () => {
 <style scoped>
 .message {
   display: flex;
-  margin: 0.5rem 0;
+  margin: 0.25rem 0;
 }
 
 .author-pfp {
