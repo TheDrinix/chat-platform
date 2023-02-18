@@ -7,6 +7,7 @@ import type { MessageData } from "@/interfaces/message";
 import { useChatsStore } from "@/stores/chats";
 import { AxiosError } from "axios";
 import { checkTokenExpirationError } from "@/helpers";
+import { useDisplay } from "vuetify";
 
 const axios = inject<AxiosInstance>('axios');
 if (!axios) throw new Error('Axios injection error');
@@ -19,6 +20,8 @@ const chatId = computed(() => {
 
 const userStore = useUserStore();
 const chatsStore = useChatsStore()
+
+const isDisplayLg = useDisplay().lgAndUp;
 
 let fileInput: Ref<null | HTMLInputElement> = ref(null)
 
@@ -41,9 +44,16 @@ const handleAttachmentChange = () => {
 }
 
 const handleMessageSend = async (e: KeyboardEvent | MouseEvent) => {
-  if (e.shiftKey) {
-    messageText.value += '\n'
-    return;
+  if (e instanceof KeyboardEvent) {
+    if (e.shiftKey) {
+      messageText.value += '\n';
+      return;
+    }
+
+    if (isDisplayLg) {
+      messageText.value += '\n';
+      return;
+    }
   }
 
   if (isSending.value) return;
@@ -96,10 +106,13 @@ const handleMessageSend = async (e: KeyboardEvent | MouseEvent) => {
       name="message"
       id="message"
       v-model="messageText"
-      max-rows="4"
+      :density="isDisplayLg ? 'default' : 'comfortable'"
+      :max-rows="4"
       rows="1"
       auto-grow
       @keydown.enter.prevent="handleMessageSend"
+      hide-details
+      class="mb-2"
     >
       <template v-slot:append-inner>
         <v-icon v-if="!isSending" icon="mdi-send" @click="handleMessageSend"></v-icon>

@@ -116,10 +116,6 @@ const handleChatLeave = async () => {
   background: #181819;
 }
 
-#chat-settings-dialog {
-  width: 90vw;
-}
-
 .member-list {
   display: flex;
   flex-direction: column;
@@ -127,6 +123,11 @@ const handleChatLeave = async () => {
   padding-right: 0.5rem;
   overflow-y: scroll;
   overflow-x: hidden;
+}
+
+#chat-settings-dialog {
+  width: 90vw;
+  margin: 0 auto;
 }
 
 @media only screen and (min-width: 580px) {

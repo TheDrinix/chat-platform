@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import defaultUserPfpUrl from "@/assets/images/default_user_pfp.png"
 import { useUserStore } from "@/stores/user";
 import { computed, inject, ref } from "vue";
@@ -8,8 +8,10 @@ import type { AxiosInstance } from "axios";
 import { checkTokenExpirationError } from "@/helpers";
 import type { LoggedInUser, User, UserResponseData } from "@/interfaces/user";
 import type { VTextField } from "vuetify/components";
+import { useDisplay } from "vuetify";
 
 const router = useRouter();
+
 const userStore = useUserStore();
 
 const axios = inject<AxiosInstance>("axios");
@@ -17,6 +19,8 @@ const axios = inject<AxiosInstance>("axios");
 if (!axios) throw new Error("Axios injection failed");
 
 const serverUrl = import.meta.env["VITE_SERVER_URL"];
+
+const isDisplayLg = useDisplay().lgAndUp;
 
 let usernameEditMode = ref(false);
 let username = ref(userStore.user.username);
@@ -42,18 +46,6 @@ const user = computed(() => {
   return userStore.user
 })
 
-let colors = ref<RGB>({
-  r: 255,
-  g: 0,
-  b: 0
-});
-const hex = computed(() => {
-  return rgbToHex(colors.value);
-})
-const rgb = computed(() => {
-  return hexToRgb(hex.value)
-})
-
 const hexToRgb = (hex: string): RGB => {
   const red = hex.slice(1, 3);
   const green = hex.slice(3, 5);
@@ -75,16 +67,25 @@ const rgbToHex = (rgb: RGB): string => {
   return `#${red + green + blue}`
 }
 
+let colors = ref<RGB>(hexToRgb(userStore.user.accent_color ?? '#FF0000'));
+const hex = computed(() => {
+  return rgbToHex(colors.value);
+})
+const rgb = computed(() => {
+  return hexToRgb(hex.value)
+})
+const isColorValid = computed(() => {
+  return validateColor(rgb.value);
+})
+
 const validateColor = (rgb: RGB): boolean => {
-  const colorsArray = [rgb.r, rgb.g, rgb.b].sort();
+  const colorsArray = [rgb.r, rgb.g, rgb.b].sort((a, b) => a - b);
 
-  if (
-    colorsArray.every(c => c >= 48)
-    || (colorsArray[0] <= 10 && colorsArray[1] <= 10 && colorsArray[2] > 64)
-    || (colorsArray[0] <= 10 && colorsArray[1] <= 32 && colorsArray[2] > 56)
-  ) return true
+  const isValid = colorsArray.every(c => c >= 48)
+    || colorsArray[2] >= 64
+    || (colorsArray[1] >= 32 && colorsArray[2] >= 56)
 
-  return false
+  return isValid;
 }
 
 interface RGB {
@@ -116,6 +117,13 @@ async function handlePfpFileChange(e: Event) {
   }
 }
 
+function handleColorUpdate() {
+  if (!validateColor(rgb.value)) return;
+
+  handleUserUpdate({accent_color: hex.value});
+
+  colorDialog.value = false;
+}
 async function handleUserUpdate(data: Partial<LoggedInUser>) {
   if (
     (await tagInput.value?.validate())?.length ||
@@ -148,7 +156,7 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
     <v-container>
       <v-row>
         <v-col cols="12">
-          <div class="profile">
+          <div class="profile" >
             <div class="color-overlay" />
             <div class="profile-content">
               <div class="user-profile">
@@ -193,10 +201,13 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
                   <div class="profile-edit-control">
                     <v-btn
                       :color="user.accent_color"
-                      variant="tonal"
+                      :variant="isDisplayLg ? 'tonal' : 'elevated'"
                       @click="usernameEditMode = !usernameEditMode"
+                      :size="isDisplayLg ? 'default' : 'small'"
+                      :rounded="!isDisplayLg"
                     >
-                      {{ usernameEditMode ? "Cancel" : "Change username" }}
+                      <span v-if="isDisplayLg">{{ usernameEditMode ? "Cancel" : "Change username" }}</span>
+                      <v-icon v-else :icon="usernameEditMode ? 'mdi-cancel' : 'mdi-pencil'" />
                     </v-btn>
                   </div>
                 </div>
@@ -226,10 +237,13 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
                   <div class="profile-edit-control">
                     <v-btn
                       :color="user.accent_color"
-                      variant="tonal"
+                      :variant="isDisplayLg ? 'tonal' : 'elevated'"
                       @click="tagEditMode = !tagEditMode"
+                      :size="isDisplayLg ? 'default' : 'small'"
+                      :rounded="!isDisplayLg"
                     >
-                      {{ tagEditMode ? 'Cancel' : 'Change profile tag' }}
+                      <span v-if="isDisplayLg">{{ tagEditMode ? 'Cancel' : 'Change profile tag' }}</span>
+                      <v-icon v-else :icon="tagEditMode ? 'mdi-cancel' : 'mdi-pencil'" />
                     </v-btn>
                   </div>
                 </div>
@@ -258,10 +272,13 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
                   <div class="profile-edit-control">
                     <v-btn
                       :color="user.accent_color"
-                      variant="tonal"
+                      :variant="isDisplayLg ? 'tonal' : 'elevated'"
                       @click="mailEditMode = !mailEditMode"
+                      :size="isDisplayLg ? 'default' : 'small'"
+                      :rounded="!isDisplayLg"
                     >
-                      {{mailEditMode ? 'Cancel' : 'Change email'}}
+                      <span v-if="isDisplayLg">{{ mailEditMode ? 'Cancel' : 'Change email' }}</span>
+                      <v-icon v-else :icon="mailEditMode ? 'mdi-cancel' : 'mdi-pencil'" />
                     </v-btn>
                   </div>
                 </div>
@@ -276,14 +293,17 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
                       <v-btn :color="user.accent_color" variant="tonal" v-bind="props">Change profile color</v-btn>
                     </template>
 
-                    <v-card>
-                      <v-card-title>Change profile accent color</v-card-title>
+                    <v-card id="accent-picker-dialog">
+                      <v-card-title class="text-center">Change profile accent color</v-card-title>
                       <v-divider />
                       <v-card-item>
-                        <v-color-picker dot-size="12" :modes="['hex', 'rgb', 'hsl']" v-model="colors" />
+                        <v-color-picker class="w-100" dot-size="12" :modes="['hex', 'rgb', 'hsl']" v-model="colors" />
                       </v-card-item>
                       <v-card-actions>
-
+                        <div class="ml-auto">
+                          <v-btn @click="handleColorUpdate" :disabled="!isColorValid">Save</v-btn>
+                          <v-btn @click="colorDialog = false">Cancel</v-btn>
+                        </div>
                       </v-card-actions>
                     </v-card>
                   </v-dialog>
@@ -299,7 +319,7 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
 
 <style scoped>
 .escape {
-  position: fixed;
+  position: absolute;
   top: 0.5rem;
   right: 0.5rem;
 }
@@ -326,9 +346,15 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
 .profile .color-overlay {
   background-color: v-bind('user.accent_color');
   width: 100%;
-  height: 6rem;
+  height: 4rem;
   border-radius: 1rem 1rem 0 0;
   z-index: 1;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
 }
 
 .profile-content {
@@ -338,7 +364,6 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
 
 .profile-picture {
   display: inline-block;
-  margin-left: 1.5rem;
   border: solid 0.5rem #191919;
   background: #191919;
   border-radius: 50%;
@@ -374,18 +399,13 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
 }
 
 .profile-username {
-  margin-left: 0.75rem;
   font-size: 1.5rem;
+  margin-top: -0.625rem;
 }
 
 .profile-username .tag {
   font-size: 75%;
   color: #8a828c;
-}
-
-.user-profile {
-  display: flex;
-  align-items: center;
 }
 
 .profile-details {
@@ -411,9 +431,36 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
 }
 
 .profile-edit-control {
-  min-width: 20%;
-  margin-left: 0.5rem;
-  display: flex;
-  flex-direction: column;
+  margin-left: 1rem;
+}
+
+#accent-picker-dialog {
+  width: fit-content;
+  margin: 0 auto;
+}
+
+@media only screen and (min-width: 768px) {
+  .profile .color-overlay {
+    height: 6rem;
+  }
+
+  .user-profile {
+    flex-direction: row;
+  }
+
+  .profile-picture {
+    margin-left: 1.5rem;
+  }
+
+  .profile-username {
+    margin-left: 0.75rem;
+    margin-top: 0;
+  }
+
+  .profile-edit-control {
+    min-width: 20%;
+    display: flex;
+    flex-direction: column;
+  }
 }
 </style>

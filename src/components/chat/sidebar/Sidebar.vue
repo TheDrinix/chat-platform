@@ -329,6 +329,7 @@ const handleCreateGroup = async () => {
 
 #create-chat-dialog {
   width: 90vw;
+  margin: 0 auto;
 }
 
 @media only screen and (min-width: 580px) {
@@ -344,6 +345,7 @@ const handleCreateGroup = async () => {
 
   #create-chat-dialog {
     width: 40vw;
+
   }
 }
 </style>

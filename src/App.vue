@@ -1,6 +1,6 @@
 <template>
-  <v-app class="h-screen overflow-hidden">
-    <v-main class="h-screen overflow-hidden">
+  <v-app class="min-h-screen">
+    <v-main class="min-h-screen">
       <Suspense>
         <router-view/>
       </Suspense>

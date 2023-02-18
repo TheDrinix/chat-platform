@@ -28,5 +28,14 @@ export default createVuetify({
     themes: {
       customDarkTheme
     }
+  },
+  display: {
+    thresholds: {
+      xs: 0,
+      sm: 580,
+      md: 768,
+      lg: 960,
+      xl: 1200
+    }
   }
 })
