@@ -12,23 +12,29 @@ const router = createRouter({
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue')
+      component: () => import('@/views/AboutView.vue')
     },
     {
       path: '/',
-      redirect: { name: 'home' }
+      redirect: { name: 'chatRequests' }
     },
     {
       path: '/chats',
       name: 'home',
       beforeEnter: isAuthenticated,
-      component: () => import('../views/home/index.vue'),
+      component: () => import('@/views/home/index.vue'),
       children: [
         { path: '', name: 'chatRequests', component: RequestsView },
         { path: ':chat_id', name: 'chat', component: ChatView }
       ]
     },
-    { path: '/auth', name: 'auth', component: () => import('../views/AuthView.vue') }
+    {
+      path: '/user',
+      name: 'user',
+      beforeEnter: isAuthenticated,
+      component: () => import('@/views/UserView.vue')
+    },
+    { path: '/auth', name: 'auth', component: () => import('@/views/AuthView.vue') }
   ]
 })
 

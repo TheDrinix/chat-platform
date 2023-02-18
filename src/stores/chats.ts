@@ -97,6 +97,9 @@ export const useChatsStore = defineStore({
 
       this.chats.set(chatId, chat);
 
+    },
+    removeChat(chat: ChatData) {
+      this.chats.delete(chat.id);
     }
   },
   getters: {
