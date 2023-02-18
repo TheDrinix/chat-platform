@@ -5,12 +5,15 @@ import { computed, inject, ref } from "vue";
 import { checkTokenExpirationError } from "@/helpers";
 import { useUserStore } from "@/stores/user";
 import type { AxiosInstance } from "axios";
+import defaultUserPfpUrl from "@/assets/images/default_user_pfp.png"
 
 const axios = inject<AxiosInstance>("axios");
 if (!axios) throw new Error('Axios injection error');
 
 const chatsStore = useChatsStore();
 const userStore = useUserStore();
+
+const serverUrl = import.meta.env["VITE_SERVER_URL"];
 
 let createChatDialog = ref(false);
 let userIdentifier = ref('');
@@ -109,6 +112,11 @@ const handleCreateGroup = async () => {
                 />
               </template>
 
+              <v-card-actions>
+                <div class="ml-auto">
+                  <v-btn color="primary" icon="mdi-close" size="small" block @click="createChatDialog = false"></v-btn>
+                </div>
+              </v-card-actions>
               <v-card-item>
                 <v-card-title>Request a private chat</v-card-title>
                 <div>
@@ -116,6 +124,7 @@ const handleCreateGroup = async () => {
                     density="comfortable"
                     append-icon="mdi-send"
                     @click:append="handleRequestSend"
+                    @keydown.enter="handleRequestSend"
                     v-model="userIdentifier"
                     :rules="[
                       () => /^.{3,120}#[a-zA-Z0-9]{4}$/gm.test(userIdentifier) || 'Enter a valid user identifier'
@@ -129,7 +138,7 @@ const handleCreateGroup = async () => {
                   </v-text-field>
                 </div>
               </v-card-item>
-              <hr>
+              <v-divider />
               <v-card-item>
                 <v-card-title>Create a group chat</v-card-title>
                 <div>
@@ -137,6 +146,7 @@ const handleCreateGroup = async () => {
                     density="comfortable"
                     append-icon="mdi-send"
                     @click:append="handleCreateGroup"
+                    @keydown.enter="handleCreateGroup"
                     v-model="groupName"
                     :rules="[
                       () => groupName.length >= 3 || 'Group name must be at least 3 characters long',
@@ -150,9 +160,6 @@ const handleCreateGroup = async () => {
                   </v-text-field>
                 </div>
               </v-card-item>
-              <v-card-actions>
-                <v-btn color="primary" block @click="createChatDialog = false">Close dialog</v-btn>
-              </v-card-actions>
             </v-card>
           </v-dialog>
         </div>
@@ -163,8 +170,18 @@ const handleCreateGroup = async () => {
       <Chat v-for="chat in chats" :chat="chat" />
     </div>
     <hr style="margin-top: auto">
-    <div class="user-info">
-
+    <div id="user-info">
+      <div class="user-pfp">
+        <img :src="userStore.user.pfpUrl ? `${serverUrl}${userStore.user.pfpUrl}` : defaultUserPfpUrl" alt="User profile picture" class="chat-logo">
+      </div>
+      <div class="username">
+        <span>{{userStore.user.username}}<span class="tag">#{{userStore.user.public_uid}}</span></span>
+      </div>
+      <div id="user-controls">
+        <router-link to="/user" custom v-slot="{ navigate }">
+          <v-icon icon="mdi-cog" @click="navigate" role="link" />
+        </router-link>
+      </div>
     </div>
   </div>
 </template>
@@ -234,6 +251,14 @@ const handleCreateGroup = async () => {
   height: 2.5rem;
   aspect-ratio: 1 / 1;
   border-radius: 50%;
+  transition: all 0.2s ease-out;
+  object-fit: cover;
+}
+
+.active :deep(.chat-logo) {
+  /*noinspection CssUnresolvedCustomProperty*/
+  border: rgb(var(--v-theme-primary)) 2px solid;
+  padding: 2px;
 }
 
 #requests-btn {
@@ -267,6 +292,29 @@ const handleCreateGroup = async () => {
 :deep(.chat-title) {
   font-size: 0rem;
   transition: font-size 0.2s ease;
+}
+
+#user-info {
+  display: flex;
+  align-items: center;
+  margin: 0.375rem 0;
+}
+
+#user-info .user-pfp {
+  height: 2.5rem;
+}
+
+#user-info .username {
+  margin-left: .5rem;
+}
+
+.username .tag {
+  font-size: .75rem;
+  color: #8a828c;
+}
+
+#user-info #user-controls {
+  margin-left: auto;
 }
 
 #sidebar:hover #requests-btn span,

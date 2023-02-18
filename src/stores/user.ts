@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import type { AuthResponseData, UserResponseData, UserStoreState } from "@/interfaces/user";
+import type { AuthResponseData, LoggedInUser, UserResponseData, UserStoreState } from "@/interfaces/user";
 
 export const useUserStore = defineStore({
   id: "user",
@@ -9,8 +9,9 @@ export const useUserStore = defineStore({
       username: '',
       public_uid: '',
       email: '',
-      pfp_url: '',
-      createdAt: new Date(0)
+      pfpUrl: '',
+      createdAt: new Date(0),
+      accent_color: '#b300ff'
     },
     tokens: {
       access_token: '',
@@ -32,8 +33,9 @@ export const useUserStore = defineStore({
         username: authData.username,
         public_uid: authData.public_uid,
         email: authData.email,
-        pfp_url: authData.pfpUrl,
-        createdAt: authData.createdAt
+        pfpUrl: authData.pfpUrl,
+        createdAt: authData.createdAt,
+        accent_color: authData.accent_color ?? this.user.accent_color
       }
     },
     async loadLoggedInUserData() {
@@ -66,8 +68,9 @@ export const useUserStore = defineStore({
           username: res.data.username,
           public_uid: res.data.public_uid,
           email: res.data.email,
-          pfp_url: res.data.pfpUrl,
-          createdAt: res.data.createdAt
+          pfpUrl: res.data.pfpUrl,
+          createdAt: res.data.createdAt,
+          accent_color: res.data.accent_color ?? this.user.accent_color
         }
       } catch (e: any) {
         console.error(e);
@@ -87,6 +90,14 @@ export const useUserStore = defineStore({
       } catch (e: any) {
         console.error(e);
       }
+    },
+    updateUserData(data: Partial<LoggedInUser>) {
+      const updated = {
+        ...this.user,
+        ...data
+      }
+
+      this.user = updated;
     }
   },
   getters: {

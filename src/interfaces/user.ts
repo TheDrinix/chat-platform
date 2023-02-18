@@ -1,21 +1,16 @@
-export interface AuthResponseData {
-  id: number;
-  username: string;
-  email: string;
-  public_uid: string;
-  pfpUrl: string;
-  createdAt: Date;
-  refreshToken: string;
-  token: string;
-}
-
 export interface UserResponseData {
   id: number;
   username: string;
   public_uid: string;
   email: string;
-  pfpUrl: string;
+  pfpUrl: string | null;
   createdAt: Date;
+  accent_color: string | null;
+}
+
+export interface AuthResponseData extends UserResponseData{
+  refreshToken: string;
+  token: string;
 }
 
 export interface UserStoreState {
@@ -27,16 +22,12 @@ export interface User {
   id: number;
   username: string;
   public_uid: string;
-  pfpUrl: string;
+  pfpUrl: string | null;
   createdAt: Date
+  accent_color: string |null;
 }
 
-export interface LoggedInUser {
-  id: number;
-  username: string;
-  public_uid: string;
-  pfp_url: string;
-  createdAt: Date
+export interface LoggedInUser extends User{
   email: string;
 }
 
