@@ -10,8 +10,11 @@ export interface ChatRequest {
 }
 
 export interface ChatRequestsStore {
-  received: ChatRequest[];
-  sent: ChatRequest[];
+  received: Map<number, ChatRequest>;
+  sent: Map<number, ChatRequest>;
 }
 
-export type ChatRequestType = 'received' | 'sent';
+export enum ChatRequestType {
+  Received = 'Received',
+  Sent = 'Sent'
+}

@@ -10,7 +10,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { mapActions } from "pinia";
+import { mapActions, mapStores } from "pinia";
 import { useUserStore } from "@/stores/user";
 import { useChatRequestsStore } from "@/stores/requests";
 
@@ -22,13 +22,14 @@ export default defineComponent({
       //
     }
   },
+  computed: {
+    ...mapStores(useUserStore)
+  },
   methods: {
-    ...mapActions(useUserStore, ['loadLoggedInUserData']),
-    ...mapActions(useChatRequestsStore, ['loadReceivedRequests'])
+    ...mapActions(useUserStore, ['loadLoggedInUserData'])
   },
   async created() {
     await this.loadLoggedInUserData();
-    await this.loadReceivedRequests();
   }
 })
 </script>

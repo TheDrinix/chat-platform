@@ -23,9 +23,7 @@ export const useChatsStore = defineStore({
         })
 
         for (let chatData of res.data) {
-          const chat: Chat = { ...chatData, messages: new Map };
-
-          this.chats.set(chat.id, chat);
+          this.storeChat(chatData);
         }
       } catch (e: any) {
         if (await checkTokenExpirationError(e)) {
@@ -52,8 +50,6 @@ export const useChatsStore = defineStore({
 
         const messages = res.data;
 
-        console.log(messages)
-
         const chat = this.chats.get(chatId);
 
         if (!chat) return;
@@ -78,6 +74,11 @@ export const useChatsStore = defineStore({
         }
       }
     },
+    storeChat(chatData: ChatData) {
+      const chat: Chat = { ...chatData, messages: new Map };
+
+      this.chats.set(chat.id, chat);
+    },
     storeChatMessage(message: MessageData) {
       const chatId = message.chat.id;
 
@@ -100,6 +101,15 @@ export const useChatsStore = defineStore({
     },
     removeChat(chat: ChatData) {
       this.chats.delete(chat.id);
+    },
+    removeChatMessage(chatId: number, messageId: number) {
+      const chat = this.chats.get(chatId);
+
+      if (!chat) return;
+
+      chat.messages.delete(messageId);
+
+      this.chats.set(chatId, chat);
     }
   },
   getters: {
@@ -116,6 +126,13 @@ export const useChatsStore = defineStore({
     },
     chatExists(state) {
       return (chatId: number) => state.chats.has(chatId);
+    },
+    hasChatMessages(state) {
+      return (chatId: number) => {
+        const chat = state.chats.get(chatId);
+
+        return !!chat?.messages.size ?? false;
+      }
     }
   }
 })

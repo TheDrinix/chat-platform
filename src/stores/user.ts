@@ -87,8 +87,10 @@ export const useUserStore = defineStore({
         });
 
         this.tokens.access_token = res.data.token;
+        return true;
       } catch (e: any) {
         console.error(e);
+        return false;
       }
     },
     updateUserData(data: Partial<LoggedInUser>) {
