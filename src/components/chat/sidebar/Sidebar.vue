@@ -1,17 +1,23 @@
 <script setup lang="ts">
 import Chat from "@/components/chat/sidebar/Chat.vue";
 import { useChatsStore } from "@/stores/chats";
-import { computed, inject, ref } from "vue";
+import { computed, inject, onBeforeUnmount, ref } from "vue";
 import { checkTokenExpirationError } from "@/helpers";
 import { useUserStore } from "@/stores/user";
 import type { AxiosInstance } from "axios";
-import defaultUserPfpUrl from "@/assets/images/default_user_pfp.png"
+import defaultUserPfpUrl from "@/assets/images/default_user_pfp.png";
+import { SocketIOService } from "@/services/SocketIO";
+import { MessageData } from "@/interfaces/message";
+import type { ChatRequest } from "@/interfaces/request";
+import { ChatRequestType } from "@/interfaces/request";
+import { useChatRequestsStore } from "@/stores/requests";
 
 const axios = inject<AxiosInstance>("axios");
 if (!axios) throw new Error('Axios injection error');
 
 const chatsStore = useChatsStore();
 const userStore = useUserStore();
+const requestsStore = useChatRequestsStore();
 
 const serverUrl = import.meta.env["VITE_SERVER_URL"];
 
@@ -24,6 +30,24 @@ const chats = computed(() => {
   return [...chatsStore.chats.values()]
 })
 
+const socketIOService = inject<SocketIOService>('socketio');
+
+if (!socketIOService) throw new Error("Socket io service injection failed");
+
+if (userStore.isAuthenticated) {
+    socketIOService.initializeConnection(import.meta.env['VITE_SERVER_URL'], userStore.tokens.access_token);
+
+  if (!socketIOService.socket) throw new Error('Sockets error');
+
+  socketIOService.socket.on('message.sent', (payload: MessageData) => {
+    chatsStore.storeChatMessage(payload)
+  })
+}
+
+onBeforeUnmount(() => {
+  socketIOService.disconnect()
+})
+
 const handleRequestSend = async () => {
   if (!/^.{3,120}#[a-zA-Z0-9]{4}$/gm.test(userIdentifier.value)) return;
 
@@ -34,8 +58,7 @@ const handleRequestSend = async () => {
   try {
     const token = userStore.tokens.access_token;
 
-    // TODO: Do something with response and add type interface for the response
-    const res = await axios.post('/chats/requests', {
+    const res = await axios.post<ChatRequest>('/chats/requests', {
       receiverUsername: username,
       receiverUid: uid
     }, {
@@ -46,6 +69,8 @@ const handleRequestSend = async () => {
 
     userIdentifier.value = '';
     createChatDialog.value = false;
+
+    requestsStore.storeRequest(res.data, ChatRequestType.Sent)
   } catch (e: any) {
     isLoading.value = false;
     if (await checkTokenExpirationError(e)) {
@@ -85,7 +110,7 @@ const handleCreateGroup = async () => {
 </script>
 
 <template>
-  <div id="sidebar" >
+  <div id="sidebar">
     <div class="chat-list">
       <div id="requests-btn">
         <div class="w-100">
@@ -284,7 +309,7 @@ const handleCreateGroup = async () => {
 }
 
 #requests-btn #start-chat-btn {
-
+  cursor: pointer;
 }
 
 #requests-btn span,

@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 import defaultUserPfpUrl from "@/assets/images/default_user_pfp.png"
 import { useUserStore } from "@/stores/user";
 import { computed, inject, ref } from "vue";
-import SettingOverlay from "@/components/userSettings/SettingOverlay.vue";
 import type { AxiosInstance } from "axios";
 import { checkTokenExpirationError } from "@/helpers";
-import type { LoggedInUser, User, UserResponseData } from "@/interfaces/user";
+import type { LoggedInUser, UserResponseData } from "@/interfaces/user";
 import type { VTextField } from "vuetify/components";
 import { useDisplay } from "vuetify";
 
@@ -36,7 +35,6 @@ let mailInput = ref<VTextField>();
 
 let colorDialog = ref(false);
 let pfpInput = ref<HTMLInputElement>();
-let pfpDialog = ref(false);
 
 const userPfpUrl = computed(() => {
   return userStore.user.pfpUrl ? `${serverUrl}${userStore.user.pfpUrl}` : defaultUserPfpUrl
@@ -81,11 +79,9 @@ const isColorValid = computed(() => {
 const validateColor = (rgb: RGB): boolean => {
   const colorsArray = [rgb.r, rgb.g, rgb.b].sort((a, b) => a - b);
 
-  const isValid = colorsArray.every(c => c >= 48)
+  return colorsArray.every(c => c >= 48)
     || colorsArray[2] >= 64
     || (colorsArray[1] >= 32 && colorsArray[2] >= 56)
-
-  return isValid;
 }
 
 interface RGB {
@@ -151,22 +147,42 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
   </div>
   <div id="user-settings">
     <header>
-      <h2>User settings</h2>
+      <v-container class="pa-0">
+        <h2>User settings</h2>
+      </v-container>
     </header>
     <v-container>
       <v-row>
         <v-col cols="12">
           <div class="profile" >
-            <div class="color-overlay" />
+            <div class="color-overlay">
+              <v-dialog v-model="colorDialog">
+                <template v-slot:activator="{ props }">
+                  <v-btn class="button" color="gray" v-bind="props" icon="mdi-brush" :size="isDisplayLg ? 'default' : 'small'" />
+                </template>
+
+                <v-card id="accent-picker-dialog">
+                  <v-card-title class="text-center">Change profile accent color</v-card-title>
+                  <v-divider />
+                  <v-card-item>
+                    <v-color-picker class="w-100" dot-size="12" :modes="['hex', 'rgb', 'hsl']" v-model="colors" />
+                  </v-card-item>
+                  <v-card-actions>
+                    <div class="ml-auto">
+                      <v-btn @click="handleColorUpdate" :disabled="!isColorValid">Save</v-btn>
+                      <v-btn @click="colorDialog = false">Cancel</v-btn>
+                    </div>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+            </div>
             <div class="profile-content">
               <div class="user-profile">
                 <div class="profile-picture">
                   <img :src="userPfpUrl" alt="Profile picture">
                   <input ref="pfpInput" type="file" id="new_pfp" hidden @change="handlePfpFileChange" accept="image/png, image/jpeg, image/gif">
-                  <label for="new_pfp">
-                    <div class="overlay" >
+                  <label class="overlay" for="new_pfp">
                       <v-icon icon="mdi-file-replace-outline" />
-                    </div>
                   </label>
                 </div>
                 <div class="profile-username">
@@ -177,7 +193,7 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
               <div class="profile-details">
                 <div class="profile-details-row">
                   <div class="profile-edit-input">
-                    <h4>Username</h4>
+                    <h4 class="font-weight-bold">Username</h4>
                     <p v-if="!usernameEditMode">{{ user.username }}</p>
                     <v-text-field
                       ref="usernameInput"
@@ -213,7 +229,7 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
                 </div>
                 <div class="profile-details-row">
                   <div class="profile-edit-input">
-                    <h4>Profile tag</h4>
+                    <h4 class="font-weight-bold">Profile tag</h4>
                     <p v-if="!tagEditMode">{{ user.public_uid }}</p>
                     <v-text-field
                       ref="tagInput"
@@ -249,7 +265,7 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
                 </div>
                 <div class="profile-details-row">
                   <div class="profile-edit-input">
-                    <h4>Email</h4>
+                    <h4 class="font-weight-bold">Email</h4>
                     <p v-if="!mailEditMode">{{ user.email }}</p>
                     <v-text-field
                       ref="tagInput"
@@ -282,32 +298,6 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
                     </v-btn>
                   </div>
                 </div>
-                <div class="profile-details-row">
-                  <v-divider />
-                </div>
-                <div class="profile-details-row">
-                  <div>
-                  </div>
-                  <v-dialog v-model="colorDialog">
-                    <template v-slot:activator="{ props }">
-                      <v-btn :color="user.accent_color" variant="tonal" v-bind="props">Change profile color</v-btn>
-                    </template>
-
-                    <v-card id="accent-picker-dialog">
-                      <v-card-title class="text-center">Change profile accent color</v-card-title>
-                      <v-divider />
-                      <v-card-item>
-                        <v-color-picker class="w-100" dot-size="12" :modes="['hex', 'rgb', 'hsl']" v-model="colors" />
-                      </v-card-item>
-                      <v-card-actions>
-                        <div class="ml-auto">
-                          <v-btn @click="handleColorUpdate" :disabled="!isColorValid">Save</v-btn>
-                          <v-btn @click="colorDialog = false">Cancel</v-btn>
-                        </div>
-                      </v-card-actions>
-                    </v-card>
-                  </v-dialog>
-                </div>
               </div>
             </div>
           </div>
@@ -322,6 +312,7 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
+  z-index: 11;
 }
 
 #user-settings {
@@ -351,10 +342,18 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
   z-index: 1;
 }
 
+.profile .color-overlay .button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+}
+
 .user-profile {
   display: flex;
   align-items: center;
   flex-direction: column;
+  z-index: 11;
 }
 
 .profile-content {
@@ -461,6 +460,12 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
     min-width: 20%;
     display: flex;
     flex-direction: column;
+  }
+}
+
+@media only screen and (min-width: 1920px) {
+  .v-container {
+    max-width: 1200px;
   }
 }
 </style>

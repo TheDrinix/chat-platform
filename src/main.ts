@@ -6,6 +6,7 @@ import { loadFonts } from './plugins/webfontloader'
 import { createPinia } from "pinia";
 import axios from './plugins/axios';
 import type { AxiosInstance } from 'axios';
+import '@/assets/main.css';
 
 loadFonts()
 
@@ -14,6 +15,7 @@ loadFonts()
 // })
 
 import 'pinia'
+import { SocketIOService } from "@/services/SocketIO";
 
 declare module 'pinia' {
   export interface PiniaCustomProperties {
@@ -35,6 +37,9 @@ app.use(pinia);
 app.use(router);
 app.use(vuetify);
 app.provide('axios', app.config.globalProperties.axios);
+
+const socketIOService = new SocketIOService();
+app.provide('socketio', socketIOService);
 
 
 app.mount('#app');

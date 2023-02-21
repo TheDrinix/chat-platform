@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ChatHeader from "@/components/chat/ChatHeader.vue";
+import ChatHeader from "@/components/chat/chatHeader/ChatHeader.vue";
 import Messages from "@/components/chat/Messages.vue";
 import MessageField from "@/components/chat/MessageInput.vue";
 </script>

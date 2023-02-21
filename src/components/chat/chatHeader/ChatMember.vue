@@ -89,12 +89,15 @@
   .member {
     display: flex;
     align-items: center;
+    margin: 0.25rem 0;
   }
 
   .member-avatar img {
     aspect-ratio: 1 / 1;
     max-height: 2.5rem;
     vertical-align: bottom;
+    border-radius: 50%;
+    object-fit: cover;
   }
 
   .member-name {

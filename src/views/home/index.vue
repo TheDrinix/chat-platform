@@ -1,33 +1,16 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, provide } from "vue";
-import { useUserStore } from "@/stores/user";
-import { SocketIOService } from "@/services/SocketIO";
 import ChatList from "@/components/chat/sidebar/Sidebar.vue";
+import { useUserStore } from "@/stores/user";
 import { useChatsStore } from "@/stores/chats";
-import { MessageData } from "@/interfaces/message";
+import { useChatRequestsStore } from "@/stores/requests";
 
 const userStore = useUserStore();
 const chatsStore = useChatsStore();
-
-const socketIOService = new SocketIOService();
+const requestsStore = useChatRequestsStore();
 
 if (userStore.isAuthenticated) {
-  await Promise.all([chatsStore.loadUsersChats()])
-
-  socketIOService.initializeConnection(import.meta.env['VITE_SERVER_URL'], userStore.tokens.access_token);
-
-  provide('socketio', socketIOService);
-
-  if (!socketIOService.socket) throw new Error('Sockets error');
-
-  socketIOService.socket.on('message.sent', (payload: MessageData) => {
-    chatsStore.storeChatMessage(payload)
-  })
+  await Promise.all([chatsStore.loadUsersChats(), requestsStore.loadRequests()]);
 }
-
-onBeforeUnmount(() => {
-  socketIOService.disconnect()
-})
 </script>
 
 <template>
