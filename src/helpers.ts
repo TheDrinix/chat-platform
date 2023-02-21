@@ -5,8 +5,7 @@ export const checkTokenExpirationError = async (error: any) => {
     if (error.response.data.message === 'EXPIRED') {
       const userStore = useUserStore();
 
-      await userStore.refreshToken();
-      return true;
+      return await userStore.refreshToken();
     }
   }
   return false;

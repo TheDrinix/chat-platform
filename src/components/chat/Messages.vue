@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Message from "@/components/chat/Message.vue";
 import { useRoute } from "vue-router";
-import { computed, inject, watch } from "vue";
+import { computed, inject, onBeforeMount, watch } from "vue";
 import { useChatsStore } from "@/stores/chats";
 import type { Message as MessageType, MessageData } from "@/interfaces/message";
 import { SocketIOService } from "@/services/SocketIO";
@@ -25,14 +25,16 @@ watch(chatId, (newChatId, prevChatId) => {
   chatsStore.loadChatMessages(newChatId)
 })
 
-chatsStore.loadChatMessages(chatId.value);
+onBeforeMount(() => {
+  if (!chatsStore.hasChatMessages(chatId.value)) chatsStore.loadChatMessages(chatId.value);
+})
 
 
 </script>
 
 <template>
   <div class="message-list">
-    <Message v-for="message in messages" :message="message" :key="message.id" />
+    <Message v-for="message in messages" :message="message" :chat-id="chatId" :key="message.id" />
   </div>
 </template>
 

@@ -50,7 +50,7 @@ const handleMessageSend = async (e: KeyboardEvent | MouseEvent) => {
       return;
     }
 
-    if (isDisplayLg) {
+    if (!isDisplayLg.value) {
       messageText.value += '\n';
       return;
     }
@@ -120,7 +120,7 @@ const handleMessageSend = async (e: KeyboardEvent | MouseEvent) => {
       </template>
 
       <template v-slot:prepend-inner>
-        <label for="attachment" @click="handleAttach">
+        <label for="attachment" class="attach-file-btn" @click="handleAttach">
           <v-icon icon="mdi-paperclip" />
         </label>
         <v-chip size="small" color="primary" closable @click:close="attachment = null" v-if="attachment">{{attachment.name}}</v-chip>

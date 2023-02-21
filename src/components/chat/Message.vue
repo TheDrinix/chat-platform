@@ -1,22 +1,39 @@
 <script setup lang="ts">
 import type { Message } from "@/interfaces/message";
-import { computed, inject } from "vue";
+import { computed, inject, ref } from "vue";
 import defaultUserPfpUrl from "@/assets/images/default_user_pfp.png"
-import { SocketIOService } from "@/services/SocketIO";
+import { useUserStore } from "@/stores/user";
+import type { AxiosInstance } from "axios";
+import { checkTokenExpirationError } from "@/helpers";
+import { useChatsStore } from "@/stores/chats";
+
+const userStore = useUserStore();
+const chatsStore = useChatsStore();
+
+const axios = inject<AxiosInstance>("axios");
+
+if (!axios) throw new Error("Axios injection failed");
 
 const props = defineProps<{
-  message: Message
+  message: Message,
+  chatId: number
 }>();
 
 const serverUrl = import.meta.env["VITE_SERVER_URL"];
 
 const messageContent = computed(() => props.message.text.split("\n"));
 
+const messageControls = ref(false);
+
 const authorPfp = computed(() => {
   return props.message.author.pfpUrl
     ? `${serverUrl}${props.message.author.pfpUrl}`
     : defaultUserPfpUrl;
 });
+
+const isUserMessageAuthor = computed(() => {
+  return props.message.author.id === userStore.user.id;
+})
 
 const author_accent_color = computed(() => props.message.author.accent_color ?? '#b300ff')
 
@@ -47,10 +64,33 @@ const downloadFile = () => {
   console.log(props.message.attachment)
   window.open(`${serverUrl}${props.message.attachment?.urlPath || `/attachments/${props.message.attachment?.id}`}`, '_blank');
 }
+
+async function handleMessageDelete() {
+  if (props.message.author.id !== userStore.user.id) return;
+
+  const res = await axios?.delete(`/messages/${props.message.id}`, {
+    headers: {
+      Authorization: `Bearer ${userStore.tokens.access_token}`
+    }
+  }).catch(async (e: any) => {
+    if (await checkTokenExpirationError(e)) {
+      handleMessageDelete();
+      return;
+    }
+  });
+
+  if (!res) return;
+
+  chatsStore.removeChatMessage(props.chatId, props.message.id);
+}
 </script>
 
 <template>
-  <div class="message">
+  <div
+    class="message"
+    @mouseenter="messageControls = true"
+    @mouseleave="messageControls = false"
+  >
     <img :src="authorPfp" alt="author pfp" class="author-pfp">
     <div class="message-body">
       <div class="message-header">
@@ -71,6 +111,16 @@ const downloadFile = () => {
         </div>
       </div>
     </div>
+    <div class="message-controls" v-if="isUserMessageAuthor && messageControls">
+      <v-btn
+        size="small"
+        rounded
+        variant="text"
+        @click="handleMessageDelete"
+      >
+        <v-icon icon="mdi-delete" />
+      </v-btn>
+    </div>
   </div>
 </template>
 
@@ -78,6 +128,9 @@ const downloadFile = () => {
 .message {
   display: flex;
   margin: 0.25rem 0;
+  padding: 0 0.25rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.3s ease;
 }
 
 .author-pfp {
@@ -89,7 +142,6 @@ const downloadFile = () => {
 }
 
 .author-name {
-  /*noinspection CssUnresolvedCustomProperty*/
   color: v-bind('author_accent_color');
   font-weight: bold;
 }
@@ -115,5 +167,32 @@ const downloadFile = () => {
 .attachments img {
   max-width: 90%;
   max-height: 50vh;
+}
+
+@keyframes show-controls {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.message-controls {
+  display: none;
+  border-radius: 0.5rem;
+  background-color: #373841;
+  position: absolute;
+  right: 0.5rem;
+  top: -0.5rem;
+}
+
+.message:hover .message-controls {
+  display: flex;
+  animation: 0.8s show-controls 0s 1;
+}
+
+.message:hover {
+  background-color: rgba(150,150,150, 0.1);
 }
 </style>
