@@ -35,7 +35,7 @@ const isUserMessageAuthor = computed(() => {
   return props.message.author.id === userStore.user.id;
 })
 
-const author_accent_color = computed(() => props.message.author.accent_color ?? '#b300ff')
+const author_accent_color = computed(() => props.message.author.accent_color ?? '#fe0055')
 
 const timestamp = computed(() => {
   const currentTime = new Date();

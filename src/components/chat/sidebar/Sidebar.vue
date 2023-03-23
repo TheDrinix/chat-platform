@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import Chat from "@/components/chat/sidebar/Chat.vue";
 import { useChatsStore } from "@/stores/chats";
-import { computed, inject, onBeforeUnmount, ref } from "vue";
+import { computed, inject, ref } from "vue";
 import { checkTokenExpirationError } from "@/helpers";
 import { useUserStore } from "@/stores/user";
 import type { AxiosInstance } from "axios";
 import defaultUserPfpUrl from "@/assets/images/default_user_pfp.png";
-import { SocketIOService } from "@/services/SocketIO";
-import { MessageData } from "@/interfaces/message";
 import type { ChatRequest } from "@/interfaces/request";
 import { ChatRequestType } from "@/interfaces/request";
 import { useChatRequestsStore } from "@/stores/requests";
@@ -28,24 +26,6 @@ let isLoading = ref(false);
 
 const chats = computed(() => {
   return [...chatsStore.chats.values()]
-})
-
-const socketIOService = inject<SocketIOService>('socketio');
-
-if (!socketIOService) throw new Error("Socket io service injection failed");
-
-if (userStore.isAuthenticated) {
-    socketIOService.initializeConnection(import.meta.env['VITE_SERVER_URL'], userStore.tokens.access_token);
-
-  if (!socketIOService.socket) throw new Error('Sockets error');
-
-  socketIOService.socket.on('message.sent', (payload: MessageData) => {
-    chatsStore.storeChatMessage(payload)
-  })
-}
-
-onBeforeUnmount(() => {
-  socketIOService.disconnect()
 })
 
 const handleRequestSend = async () => {

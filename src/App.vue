@@ -1,9 +1,7 @@
 <template>
   <v-app class="min-h-screen">
     <v-main class="min-h-screen">
-      <Suspense>
-        <router-view/>
-      </Suspense>
+      <router-view/>
     </v-main>
   </v-app>
 </template>

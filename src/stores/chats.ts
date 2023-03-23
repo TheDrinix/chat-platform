@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import type { Chat, ChatData, ChatsStore } from "@/interfaces/chat";
+import type { Chat, ChatData, ChatsStore, ChatType } from "@/interfaces/chat";
 import { useUserStore } from "@/stores/user";
 import type { Message, MessageData } from "@/interfaces/message";
 import { checkTokenExpirationError } from "@/helpers";
@@ -110,6 +110,15 @@ export const useChatsStore = defineStore({
       chat.messages.delete(messageId);
 
       this.chats.set(chatId, chat);
+    },
+    updateChatMemberList(chatData: ChatData) {
+      const chat = this.chats.get(chatData.id);
+
+      if (!chat) return;
+
+      chat.members = chatData.members;
+
+      this.chats.set(chat.id, chat);
     }
   },
   getters: {
@@ -132,6 +141,43 @@ export const useChatsStore = defineStore({
         const chat = state.chats.get(chatId);
 
         return !!chat?.messages.size ?? false;
+      }
+    },
+    getChatName(state) {
+      return (chatId: number) => {
+        const userStore = useUserStore();
+
+        const chat = state.chats.get(chatId);
+
+        if (chat?.type === 'group') return chat.name;
+
+        const user = chat?.members.filter(u => u.id !== userStore.user.id)[0];
+
+        return `${user?.username}#${user?.public_uid}`
+      }
+    },
+    isGroupChat(state) {
+      return (chatId: number) => {
+        return state.chats.get(chatId)?.type === 'group';
+      }
+    },
+    getChatData(state) {
+      return (chatId: number): Chat => {
+        const chat = state.chats.get(chatId);
+
+        if (!chat) return {
+          id: -1,
+          type: 'group',
+          name: '',
+          members: [],
+          owner: null,
+          messages: new Map
+        }
+
+        return {
+          ...chat,
+          messages: new Map
+        }
       }
     }
   }

@@ -33,7 +33,8 @@ const router = createRouter({
       beforeEnter: isAuthenticated,
       component: () => import('@/views/UserView.vue')
     },
-    { path: '/auth', name: 'auth', component: () => import('@/views/AuthView.vue') }
+    { path: '/auth/confirm/:token', name: 'accountConfirmation', component: () => import("@/views/AccountConfirmView.vue") },
+    { path: '/auth', name: 'auth', component: () => import('@/views/AuthView.vue') },
   ]
 })
 

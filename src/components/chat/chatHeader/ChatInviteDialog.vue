@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { computed, inject, ref } from "vue";
-import type { Chat } from "@/interfaces/chat";
 import { AxiosInstance } from "axios";
 import type { ChatRequest } from "@/interfaces/request";
 import { ChatRequestType } from "@/interfaces/request";
 import { useUserStore } from "@/stores/user";
 import { checkTokenExpirationError } from "@/helpers";
 import { useChatRequestsStore } from "@/stores/requests";
+import { useChatsStore } from "@/stores/chats";
 
 const userStore = useUserStore();
+const chatsStore = useChatsStore();
 const requestsStore = useChatRequestsStore();
 
 const axios = inject<AxiosInstance>('axios');
@@ -16,18 +17,22 @@ const axios = inject<AxiosInstance>('axios');
 if (!axios) throw new Error('Axios injection failed');
 
 const props = defineProps<{
-  chat: Chat
+  chatId: number
 }>()
 
 let groupInviteDialog = ref(false);
 let userIdentifier = ref('');
+
+const chat = computed(() => {
+  return chatsStore.getChatData(props.chatId)
+})
 
 const isIdentifierValid = computed(() => {
   return /^.{3,120}#[a-zA-Z0-9]{4}$/gm.test(userIdentifier.value);
 })
 
 const isUserChatMember = computed(() => {
-  return props.chat.members.some((u) => {
+  return chat.value.members.some((u) => {
     const [username, uid] = userIdentifier.value.split('#');
 
     return `${u.username}#${u.public_uid}` === `${username}#${uid.toUpperCase()}`;
@@ -42,7 +47,7 @@ async function handleUserInvite() {
 
   const [username, uid] = userIdentifier.value.split('#');
 
-  const res = await axios?.post<ChatRequest>(`/chats/${props.chat.id}/invite`, {
+  const res = await axios?.post<ChatRequest>(`/chats/${chat.value.id}/invite`, {
     receiverUsername: username,
     receiverUid: uid
   }, {
@@ -73,7 +78,7 @@ async function handleUserInvite() {
       <v-card-actions class="pb-1">
         <div>
           <v-card-title>
-            Invite to {{props.chat.name}}
+            Invite to {{chat.name}}
           </v-card-title>
         </div>
         <div class="ml-auto">

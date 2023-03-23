@@ -462,10 +462,4 @@ async function handleUserUpdate(data: Partial<LoggedInUser>) {
     flex-direction: column;
   }
 }
-
-@media only screen and (min-width: 1920px) {
-  .v-container {
-    max-width: 1200px;
-  }
-}
 </style>

@@ -35,6 +35,7 @@ onBeforeMount(() => {
 <template>
   <div class="message-list">
     <Message v-for="message in messages" :message="message" :chat-id="chatId" :key="message.id" />
+    {{}}
   </div>
 </template>
 
@@ -52,7 +53,7 @@ onBeforeMount(() => {
 /* Firefox */
 .message-list {
   scrollbar-width: auto;
-  scrollbar-color: #8f54a0 #202225;
+  scrollbar-color: rgb(var(--v-theme-primary-darken-1)) #202225;
 }
 
 /* Chrome, Edge, and Safari */
@@ -65,7 +66,7 @@ onBeforeMount(() => {
 }
 
 .message-list::-webkit-scrollbar-thumb {
-  background-color: #8f54a0;
+  background-color: rgb(var(--v-theme-primary-darken-1));
   border-radius: 10px;
   border: 3px solid #202225;
 }

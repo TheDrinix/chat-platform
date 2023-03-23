@@ -17,20 +17,25 @@ const axios = inject<AxiosInstance>('axios');
 if (!axios) throw new Error('Axios injection failed');
 
 const props = defineProps<{
-  chat: Chat
+  chatId: number
 }>()
+
+const chat = computed(() => {
+  return chatsStore.getChatData(props.chatId)
+})
+
 
 const groupChatSettingsDialog = ref(false);
 
 const isChatOwner = computed(() => {
-  return props.chat?.owner?.id === userStore.user.id;
+  return chat.value.owner?.id === userStore.user.id;
 })
 
 const handleChatLeave = async () => {
   try {
     const token = userStore.tokens.access_token;
 
-    const res = await axios.post<ChatData>(`/chats/${props.chat.id}/leave/`, {}, {
+    const res = await axios.post<ChatData>(`/chats/${chat.value.id}/leave/`, {}, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -57,7 +62,7 @@ const handleChatLeave = async () => {
       <v-card-actions class="pb-1">
         <div>
           <v-card-title>
-            {{props.chat.name}}
+            {{chat.name}}
           </v-card-title>
         </div>
         <div class="ml-auto">
@@ -75,7 +80,7 @@ const handleChatLeave = async () => {
           <v-expansion-panel title="Members">
             <v-expansion-panel-text>
               <v-list lines="false" class="member-list">
-                <ChatMember v-for="member of props.chat.members" :member="member" :chat-id="props.chat.id" :is-user-chat-owner="isChatOwner" />
+                <ChatMember v-for="member of chat.members" :member="member" :chat-id="chat.id" :is-user-chat-owner="isChatOwner" />
               </v-list>
             </v-expansion-panel-text>
           </v-expansion-panel>

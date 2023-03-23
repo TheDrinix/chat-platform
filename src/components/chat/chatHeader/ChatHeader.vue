@@ -2,7 +2,6 @@
 import { useRoute } from "vue-router";
 import { useChatsStore } from "@/stores/chats";
 import { computed } from "vue";
-import type { Chat } from "@/interfaces/chat";
 import ChatSettingsDialog from "@/components/chat/chatHeader/ChatSettingsDialog.vue";
 import ChatInviteDialog from "@/components/chat/chatHeader/ChatInviteDialog.vue";
 import { useUserStore } from "@/stores/user";
@@ -15,18 +14,12 @@ const chatId = computed(() => {
   return +route.params['chat_id'] ?? 0;
 });
 
-const chat = computed<Chat | undefined>(() => {
-  const chat = chatsStore.chats.get(chatId.value);
-
-  return chat;
-});
-
 const chatName = computed(() => {
-  if (chat.value?.type === 'group') return chat.value?.name;
+  return chatsStore.getChatName(chatId.value);
+})
 
-  const user = chat.value?.members.filter(u => u.id !== userStore.user.id)[0];
-
-  return `${user?.username}#${user?.public_uid}`
+const isGroupChat = computed(() => {
+  return chatsStore.isGroupChat(chatId.value);
 })
 </script>
 
@@ -35,9 +28,9 @@ const chatName = computed(() => {
     <div>
       <h3>{{chatName}}</h3>
     </div>
-    <div v-if="chat.type === 'group'">
-      <ChatInviteDialog :chat="chat" />
-      <ChatSettingsDialog :chat="chat" />
+    <div v-if="isGroupChat">
+      <ChatInviteDialog :chat-id="chatId" />
+      <ChatSettingsDialog :chat-id="chatId" />
     </div>
   </header>
 </template>
